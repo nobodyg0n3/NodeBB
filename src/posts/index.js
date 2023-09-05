@@ -1,15 +1,44 @@
 'use strict';
-
-const _ = require('lodash');
-
-const db = require('../database');
-const utils = require('../utils');
-const user = require('../user');
-const privileges = require('../privileges');
-const plugins = require('../plugins');
-
-const Posts = module.exports;
-
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const _ = __importStar(require("lodash"));
+const db = __importStar(require("../database"));
+const utils = __importStar(require("../utils"));
+const user = __importStar(require("../user"));
+const privileges = __importStar(require("../privileges"));
+const plugins = __importStar(require("../plugins"));
+const Posts = {};
 require('./data')(Posts);
 require('./create')(Posts);
 require('./delete')(Posts);
@@ -26,72 +55,72 @@ require('./bookmarks')(Posts);
 require('./queue')(Posts);
 require('./diffs')(Posts);
 require('./uploads')(Posts);
-
-Posts.exists = async function (pids) {
-    return await db.exists(
-        Array.isArray(pids) ? pids.map(pid => `post:${pid}`) : `post:${pids}`
-    );
+Posts.exists = function (pids) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield db.exists(Array.isArray(pids) ? pids.map(pid => `post:${pid}`) : `post:${pids}`);
+    });
 };
-
-Posts.getPidsFromSet = async function (set, start, stop, reverse) {
-    if (isNaN(start) || isNaN(stop)) {
-        return [];
-    }
-    return await db[reverse ? 'getSortedSetRevRange' : 'getSortedSetRange'](set, start, stop);
+Posts.getPidsFromSet = function (set, start, stop, reverse) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (isNaN(start) || isNaN(stop)) {
+            return [];
+        }
+        return yield db[reverse ? 'getSortedSetRevRange' : 'getSortedSetRange'](set, start, stop);
+    });
 };
-
-Posts.getPostsByPids = async function (pids, uid) {
-    if (!Array.isArray(pids) || !pids.length) {
-        return [];
-    }
-    let posts = await Posts.getPostsData(pids);
-    posts = await Promise.all(posts.map(Posts.parsePost));
-    const data = await plugins.hooks.fire('filter:post.getPosts', { posts: posts, uid: uid });
-    if (!data || !Array.isArray(data.posts)) {
-        return [];
-    }
-    return data.posts.filter(Boolean);
+Posts.getPostsByPids = function (pids, uid) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!Array.isArray(pids) || !pids.length) {
+            return [];
+        }
+        let posts = yield Posts.getPostsData(pids);
+        posts = yield Promise.all(posts.map(Posts.parsePost));
+        const data = yield plugins.hooks.fire('filter:post.getPosts', { posts: posts, uid: uid });
+        if (!data || !Array.isArray(data.posts)) {
+            return [];
+        }
+        return data.posts.filter(Boolean);
+    });
 };
-
-Posts.getPostSummariesFromSet = async function (set, uid, start, stop) {
-    let pids = await db.getSortedSetRevRange(set, start, stop);
-    pids = await privileges.posts.filter('topics:read', pids, uid);
-    const posts = await Posts.getPostSummaryByPids(pids, uid, { stripTags: false });
-    return { posts: posts, nextStart: stop + 1 };
+Posts.getPostSummariesFromSet = function (set, uid, start, stop) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let pids = yield db.getSortedSetRevRange(set, start, stop);
+        pids = yield privileges.posts.filter('topics:read', pids, uid);
+        const posts = yield Posts.getPostSummaryByPids(pids, uid, { stripTags: false });
+        return { posts: posts, nextStart: stop + 1 };
+    });
 };
-
-Posts.getPidIndex = async function (pid, tid, topicPostSort) {
-    const set = topicPostSort === 'most_votes' ? `tid:${tid}:posts:votes` : `tid:${tid}:posts`;
-    const reverse = topicPostSort === 'newest_to_oldest' || topicPostSort === 'most_votes';
-    const index = await db[reverse ? 'sortedSetRevRank' : 'sortedSetRank'](set, pid);
-    if (!utils.isNumber(index)) {
-        return 0;
-    }
-    return utils.isNumber(index) ? parseInt(index, 10) + 1 : 0;
+Posts.getPidIndex = function (pid, tid, topicPostSort) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const set = topicPostSort === 'most_votes' ? `tid:${tid}:posts:votes` : `tid:${tid}:posts`;
+        const reverse = topicPostSort === 'newest_to_oldest' || topicPostSort === 'most_votes';
+        const index = yield db[reverse ? 'sortedSetRevRank' : 'sortedSetRank'](set, pid);
+        if (!utils.isNumber(index)) {
+            return 0;
+        }
+        return utils.isNumber(index) ? parseInt(index, 10) + 1 : 0;
+    });
 };
-
-Posts.getPostIndices = async function (posts, uid) {
-    if (!Array.isArray(posts) || !posts.length) {
-        return [];
-    }
-    const settings = await user.getSettings(uid);
-
-    const byVotes = settings.topicPostSort === 'most_votes';
-    let sets = posts.map(p => (byVotes ? `tid:${p.tid}:posts:votes` : `tid:${p.tid}:posts`));
-    const reverse = settings.topicPostSort === 'newest_to_oldest' || settings.topicPostSort === 'most_votes';
-
-    const uniqueSets = _.uniq(sets);
-    let method = reverse ? 'sortedSetsRevRanks' : 'sortedSetsRanks';
-    if (uniqueSets.length === 1) {
-        method = reverse ? 'sortedSetRevRanks' : 'sortedSetRanks';
-        sets = uniqueSets[0];
-    }
-
-    const pids = posts.map(post => post.pid);
-    const indices = await db[method](sets, pids);
-    return indices.map(index => (utils.isNumber(index) ? parseInt(index, 10) + 1 : 0));
+Posts.getPostIndices = function (posts, uid) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!Array.isArray(posts) || !posts.length) {
+            return [];
+        }
+        const settings = yield user.getSettings(uid);
+        const byVotes = settings.topicPostSort === 'most_votes';
+        let sets = posts.map(p => (byVotes ? `tid:${p.tid}:posts:votes` : `tid:${p.tid}:posts`));
+        const reverse = settings.topicPostSort === 'newest_to_oldest' || settings.topicPostSort === 'most_votes';
+        const uniqueSets = _.uniq(sets);
+        let method = reverse ? 'sortedSetsRevRanks' : 'sortedSetsRanks';
+        if (uniqueSets.length === 1) {
+            method = reverse ? 'sortedSetRevRanks' : 'sortedSetRanks';
+            sets = uniqueSets[0];
+        }
+        const pids = posts.map(post => post.pid);
+        const indices = yield db[method](sets, pids);
+        return indices.map(index => (utils.isNumber(index) ? parseInt(index, 10) + 1 : 0));
+    });
 };
-
 Posts.modifyPostByPrivilege = function (post, privileges) {
     if (post && post.deleted && !(post.selfPost || privileges['posts:view_deleted'])) {
         post.content = '[[topic:post_is_deleted]]';
@@ -100,5 +129,4 @@ Posts.modifyPostByPrivilege = function (post, privileges) {
         }
     }
 };
-
 require('../promisify')(Posts);
